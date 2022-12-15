@@ -15,19 +15,17 @@ import { Request, Response } from 'express';
 import { LoginGuard } from './common/guards/login.guard';
 import { AuthenticatedGuard } from './common/guards/authenticated.guard';
 import { AuthExceptionFilter } from './common/filters/auth-exception.filter';
-import * as bcrypt from 'bcrypt';
 
 @Controller()
 @UseFilters(AuthExceptionFilter)
 export class AppController {
   constructor(
     private readonly appService: AppService,
-    @Inject('ENCRYPTION') private readonly encryption: typeof bcrypt,
   ) {}
 
   @Get('/encrypt')
   encrypt(@Query('raw') raw: string) {
-    return this.encryption.hash(raw, 10);
+    return this.appService.encrypt(raw);
   }
 
   @Get('/')
