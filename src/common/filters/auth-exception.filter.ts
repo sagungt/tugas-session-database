@@ -5,6 +5,7 @@ import {
   HttpException,
   UnauthorizedException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
@@ -21,6 +22,10 @@ export class AuthExceptionFilter implements ExceptionFilter {
     ) {
       request.flash('loginError', 'Please try again!');
       response.redirect('/');
+    } else if (exception instanceof BadRequestException) {
+      const message: any = exception.getResponse();
+      request.flash('registerError', message.message)
+      response.redirect('/register');
     } else {
       response.redirect('/error');
     }

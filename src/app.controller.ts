@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Inject,
@@ -8,19 +9,24 @@ import {
   Req,
   Res,
   UseFilters,
-  UseGuards
+  UseGuards,
+  UsePipes,
+  ValidationPipe
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Request, Response } from 'express';
 import { LoginGuard } from './common/guards/login.guard';
 import { AuthenticatedGuard } from './common/guards/authenticated.guard';
 import { AuthExceptionFilter } from './common/filters/auth-exception.filter';
+import { UsersService } from './users/users.service';
+import { CreateUserDTO } from './dtos/CreateUser.dto';
 
 @Controller()
 @UseFilters(AuthExceptionFilter)
 export class AppController {
   constructor(
     private readonly appService: AppService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Get('/encrypt')
@@ -32,8 +38,11 @@ export class AppController {
   @Render('login')
   index(
     @Req() req: Request,
-  ): { message: string[] } {
-    return { message: req.flash('loginError') };
+  ): { message: string[], registerSuccess: string[] } {
+    return {
+      message: req.flash('loginError'),
+      registerSuccess: req.flash('registerMessage')
+    };
   }
 
   @UseGuards(LoginGuard)
@@ -44,6 +53,26 @@ export class AppController {
     res.redirect('/home');
   }
 
+  @Get('/register')
+  @Render('register')
+  registerView(
+    @Req() req: Request,
+  ): { message: string[] } {
+    return { message: req.flash('registerError') };
+  }
+
+  @Post('/register')
+  @UsePipes(ValidationPipe)
+  async register(
+    @Body() createUserDto: CreateUserDTO,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { message } = await this.usersService.createUser(createUserDto);
+    req.flash('registerMessage', message);
+    res.redirect('/');
+  }
+  
   @UseGuards(AuthenticatedGuard)
   @Get('/home')
   @Render('home')
